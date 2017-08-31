@@ -1,4 +1,4 @@
-CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS = -std=gnu++14 -g -Wall -Wextra -Werror
 
 all: query
 
