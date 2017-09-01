@@ -6,8 +6,10 @@
 #include <iostream>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include <functional>
+#include <utility>
 
 /* {{{ Utils */
 
@@ -222,6 +224,55 @@ static int distinct(const std::vector<const char *> &files,
     return 0;
 }
 
+static void bubble_down(std::vector<std::pair<std::string, uint64_t>> &tops,
+                        size_t pos)
+{
+    if (pos == 0) {
+        return;
+    }
+    for (size_t i = pos; i-- > 0;) {
+        if (std::get<1>(tops[i]) < std::get<1>(tops[i + 1])) {
+            std::swap(tops[i], tops[i + 1]);
+        } else {
+            break;
+        }
+    }
+}
+
+static int top(uint64_t top_count, const std::vector<const char *> &files,
+               date_t from, date_t to)
+{
+    std::unordered_map<std::string, uint64_t> queries;
+    auto cb = [&queries](const char *query) {
+        auto slot = queries.find(query);
+
+        if (slot == queries.end()) {
+            queries.insert(std::make_pair(query, 1));
+        } else {
+            ++slot->second;
+        }
+    };
+
+    SRETHROW(do_on_files(files, from, to, cb));
+
+    std::vector<std::pair<std::string, uint64_t>> tops;
+    for (auto pair : queries) {
+        if (tops.size() < top_count) {
+            tops.push_back(pair);
+            bubble_down(tops, tops.size() - 1);
+        } else
+        if (pair.second > tops.back().second) {
+            tops.back() = pair;
+            bubble_down(tops, tops.size() - 1);
+        }
+    }
+
+    for (auto result : tops) {
+        std::cout << std::get<0>(result) << "\t" << std::get<1>(result) << "\n";
+    }
+    return 0;
+}
+
 /* }}} */
 /* {{{ Command line parsing */
 
@@ -365,7 +416,6 @@ int main(int argc, char *argv[])
         return distinct(opts.files, opts.from, opts.to);
 
       case options_t::TOP:
-        std::cerr << "unimplemented command\n";
-        return -1;
+        return top(opts.count, opts.files, opts.from, opts.to);
     }
 }
