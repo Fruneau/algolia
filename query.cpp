@@ -320,9 +320,9 @@ struct options_t {
         if (strcmp(cmd, "top") == 0) {
             command = options_t::TOP;
 
-            auto count = RETHROW_PN(next_arg(argc, argv), "missing top count");
+            auto count_str = RETHROW_PN(next_arg(argc, argv), "missing top count");
 
-            RETHROW(parse_integer<uint64_t>(count, 1, UINT64_MAX, this->count),
+            RETHROW(parse_integer<uint64_t>(count_str, 1, UINT64_MAX, count),
                     "malformed top count");
         } else
         if (strcmp(cmd, "help") == 0) {
